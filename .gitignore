@@ -1,0 +1,10 @@
+/.vs
+/bin
+/obj
+/appsettings.json
+/appsettings.Development.json
+/TodoForCoders.sln
+/TodoForCoders.csproj
+/Properties
+/Dependencies
+/Connected Services
