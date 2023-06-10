@@ -1,6 +1,7 @@
 ﻿using Dapper;
 using Microsoft.AspNetCore.Mvc;
 using Npgsql;
+using System.Linq.Expressions;
 using TodoForCoders.Models;
 
 namespace TodoForCoders.Controllers
@@ -57,6 +58,23 @@ namespace TodoForCoders.Controllers
             await _db.QueryAsync<Feature>("insert into Feature(Title, Description, IsCompleted) values(@Title, @Description, @IsCompleted)", feature);
 
             return Ok(feature);
+        }
+
+        [HttpPut]
+        public async Task<ActionResult<List<Feature>>> UpdateFeature(Feature feature)
+        {
+            try
+            {
+                using var _db = new NpgsqlConnection(_configuration.GetConnectionString("TodoForCoders"));
+
+                await _db.QueryAsync<Feature>("update Feature set Title=@Title, Description=@Description, IsCompleted=@IsCompleted where FeatureId = @FeatureId", feature);
+
+                return Ok(feature);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         [HttpDelete("{featureId}")]
