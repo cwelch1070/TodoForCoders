@@ -1,8 +1,7 @@
 ﻿using Dapper;
 using Microsoft.AspNetCore.Mvc;
-using Npgsql;
-using System.Linq.Expressions;
 using TodoForCoders.Models;
+using TodoForCoders.Services;
 
 namespace TodoForCoders.Controllers
 {
@@ -14,50 +13,42 @@ namespace TodoForCoders.Controllers
         // This is the same as writing private readonly string _configuration
         // only slightly more complex because IConfiguration is an interface.
         // Therefore, this does not assign a value to _configuration it makes it a type of IConfiguration.
-        private readonly IConfiguration _configuration;
+        private readonly ITodoService _todoService;
 
         // Constructor for dependecy injections
-        public FeatureController(IConfiguration configuration)
+        public FeatureController(ITodoService todoService)
         {
-            _configuration = configuration;
+            _todoService = todoService;
         }
 
         // Get all features
         [HttpGet]
-        public async Task<ActionResult<List<Feature>>> GetAllFeatures()
+        public async Task<ActionResult<List<Feature>>> GetAll()
         {
-            // Connecting to Database
-            var _db = new NpgsqlConnection(_configuration.GetConnectionString("TodoForCoders"));
-
             // Perform query on database and store result in features variable
-            var features = await _db.QueryAsync<Feature>("select * from Feature");
+            var result = await _todoService.GetAllFeatures();
 
             // Return the status of the operation 
-            return Ok(features);
+            return Ok(result);
         }
 
         // Get a feature by Id
         [HttpGet("{featureId}")]
         public async Task<ActionResult<Feature>> GetFeature(int featureId)
         {
-            // Connect to database
-            var _db = new NpgsqlConnection(_configuration.GetConnectionString("TodoForCoders"));
-
             // Perform query on database and store result in feture variable
-            var feature = await _db.QueryAsync<Feature>("select * from Feature where featureId = @Id", new { Id = featureId });
+            var feature = await _todoService.GetFeature(featureId);
+
             return Ok(feature);
         }
 
         [HttpPost]
         public async Task<ActionResult<Feature>> CreateFeature(Feature feature)
         {
-            // Connect to database
-            var _db = new NpgsqlConnection(_configuration.GetConnectionString("TodoForCoders"));
-
             // Perform query on database and store result in feture variable
-            await _db.QueryAsync<Feature>("insert into Feature(Title, Description, IsCompleted) values(@Title, @Description, @IsCompleted)", feature);
+            var result = await _todoService.CreateFeature(feature);
 
-            return Ok(feature);
+            return Ok(result);
         }
 
         [HttpPut]
@@ -65,11 +56,9 @@ namespace TodoForCoders.Controllers
         {
             try
             {
-                using var _db = new NpgsqlConnection(_configuration.GetConnectionString("TodoForCoders"));
+                var result = await _todoService.UpdateFeature(feature);
 
-                await _db.QueryAsync<Feature>("update Feature set Title=@Title, Description=@Description, IsCompleted=@IsCompleted where FeatureId = @FeatureId", feature);
-
-                return Ok(feature);
+                return Ok(result);
             }
             catch (Exception ex)
             {
@@ -80,11 +69,9 @@ namespace TodoForCoders.Controllers
         [HttpDelete("{featureId}")]
         public async Task<ActionResult<Feature>> DeleteFeature(int featureId)
         {
-            var _db = new NpgsqlConnection(_configuration.GetConnectionString("TodoForCoders"));
+            var result = await _todoService.DeleteFeature(featureId);
 
-            var feature = await _db.QueryAsync<Feature>("delete from Feature where featureId = @Id", new { Id = featureId });
-
-            return Ok(feature);
+            return Ok(result);
         }
     }
 }
