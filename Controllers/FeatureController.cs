@@ -1,7 +1,8 @@
-﻿using Dapper;
+﻿using Newtonsoft.Json;
 using Microsoft.AspNetCore.Mvc;
 using TodoForCoders.Models;
 using TodoForCoders.Services;
+using Newtonsoft.Json.Linq;
 
 namespace TodoForCoders.Controllers
 {
@@ -36,10 +37,25 @@ namespace TodoForCoders.Controllers
         [HttpGet("{featureId}")]
         public async Task<ActionResult<Feature>> GetFeature(int featureId)
         {
-            // Perform query on database and store result in feture variable
-            var feature = await _todoService.GetFeature(featureId);
+            try
+            {
+                // Call TodoService to perform query
+                var result = await _todoService.GetFeature(featureId);
 
-            return Ok(feature);
+                var jsonResult = JsonConvert.SerializeObject(result, Formatting.Indented);
+
+                if(jsonResult == "[]")
+                {
+                    throw new Exception("Feature does not exist");
+                }
+
+                Console.WriteLine("From Get by Id: " + jsonResult);
+
+                return Ok(jsonResult);
+            } catch (Exception ex)
+            {
+                return NotFound(ex.Message);
+            }
         }
 
         [HttpPost]
@@ -54,6 +70,7 @@ namespace TodoForCoders.Controllers
         [HttpPut]
         public async Task<ActionResult<List<Feature>>> UpdateFeature(Feature feature)
         {
+            // Add way to verify feature being updated exists in the database
             try
             {
                 var result = await _todoService.UpdateFeature(feature);
@@ -69,6 +86,8 @@ namespace TodoForCoders.Controllers
         [HttpDelete("{featureId}")]
         public async Task<ActionResult<Feature>> DeleteFeature(int featureId)
         {
+            // Add way to verify feature exists before deleteing and if doesnt 
+            // return an alert that it does not exist
             var result = await _todoService.DeleteFeature(featureId);
 
             return Ok(result);
